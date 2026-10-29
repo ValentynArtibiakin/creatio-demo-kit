@@ -3,13 +3,13 @@
   "owner": {
     "name": "Valentyn Artibiakin @Creatio"
   },
-  "description": "Demo script check tools: walkthrough carousel and effort estimator",
+  "description": "Creatio demo walkthrough carousel",
   "plugins": [
     {
       "name": "creatio-demo-kit",
       "source": "./",
-      "description": "Walkthrough carousel of a demo script + build-days estimator agent",
-      "version": "0.1.0"
+      "description": "Demo script → clickable walkthrough carousel of Creatio screens",
+      "version": "0.2.0"
     }
   ]
 }

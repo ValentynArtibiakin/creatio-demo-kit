@@ -1,8 +1,8 @@
 {
   "name": "creatio-demo-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Creatio Demo Kit",
-  "description": "Two tools for checking a Creatio demo script before the build: a clickable walkthrough carousel of the demo screens (Creatio Freedom UI look, build labels, one Artifact link to agree scope with the SE) and an agent that estimates the build and handover days, the risks and what to cut, and learns from each delivered demo.",
+  "description": "Turn a Creatio demo script into a clickable walkthrough carousel: one Creatio Freedom UI screen per demo step, client branding, data from the script, build labels OOTB / Config / New / Custom / Demo mock, published as one Artifact link - to discuss the scenario with the SE and hand it to the consultants.",
   "author": {
     "name": "Valentyn Artibiakin @Creatio",
     "email": "v.artibiakin@creatio.com"
@@ -11,8 +11,8 @@
   "keywords": [
     "creatio",
     "demo",
-    "estimate",
     "walkthrough",
-    "prototype"
+    "prototype",
+    "carousel"
   ]
 }
