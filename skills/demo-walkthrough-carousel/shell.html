@@ -37,6 +37,18 @@ body.hot .screen a[data-go]{outline:2px solid var(--hot);outline-offset:2px;bord
 body.hidetags .screen .tag{display:none!important}
 .screen button{cursor:default}
 .thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:14px;line-height:1.5;min-width:0}
+.note h2{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.note ol,.note ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.note p{margin:0;white-space:pre-line}
+.note.q{border-left:4px solid var(--hot)}
+.note.q h2{color:var(--hot)}
+.qbtn{font:600 13px var(--display);padding:7px 12px;border-radius:20px;border:1px solid var(--hot);background:var(--panel);color:var(--hot);cursor:pointer;min-height:36px}
+.thumb .tq{font-size:11px;font-weight:700;color:var(--hot)}
+body.nonotes .note.n{display:none}
+body.noq .note.q,body.noq .thumb .tq,body.noq #qbtn{display:none}
+@media print{.ctrls,.thumbs,.hint{display:none!important}}
 .thumb{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-family:var(--display);cursor:pointer;min-width:132px;text-align:left}
 .thumb .tn{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 .thumb .tu{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--accent)}
@@ -53,12 +65,20 @@ body.hidetags .screen .tag{display:none!important}
     <div class="ctrls">
       <label class="toggle" for="t-hot"><input type="checkbox" id="t-hot" checked> Show clickable</label>
       <label class="toggle" for="t-tags"><input type="checkbox" id="t-tags" checked> Build labels</label>
+      <label class="toggle" for="t-notes"><input type="checkbox" id="t-notes" checked> Presenter notes</label>
+      <label class="toggle" for="t-q"><input type="checkbox" id="t-q" checked> Open questions</label>
+      <button type="button" class="qbtn" id="qbtn" hidden></button>
       <button type="button" class="btn" id="prev" aria-label="Previous screen">← Prev</button>
       <span class="count" id="count">1 / {{COUNT}}</span>
       <button type="button" class="btn primary" id="next" aria-label="Next screen">Next →</button>
     </div>
   </div>
   <div class="cap"><span class="uc" id="cap-uc">Start</span><h1 id="cap-title"></h1><span class="hint">Click the outlined elements inside the screen, or use ← →</span><p id="cap-desc"></p></div>
+  <div class="notes" id="notes">
+    <section class="note n" id="n-click" hidden><h2>Click</h2><ol id="n-click-list"></ol></section>
+    <section class="note n" id="n-say" hidden><h2>Say</h2><p id="n-say-text"></p></section>
+    <section class="note q" id="n-q" hidden><h2>Open questions for the SE</h2><ul id="n-q-list"></ul></section>
+  </div>
   <div class="stage" id="stage">
 <!--SLIDES-->
   </div>
@@ -66,12 +86,26 @@ body.hidetags .screen .tag{display:none!important}
 <!--THUMBS-->
   </nav>
 </div>
+<script type="application/json" id="notes-data">/*NOTESJSON*/</script>
 <script>
 (function(){
   var slides=[].slice.call(document.querySelectorAll('.slide'));
   var ids=slides.map(function(s){return s.dataset.id});
   var thumbs=[].slice.call(document.querySelectorAll('.thumb'));
   var stage=document.getElementById('stage'), cur=0;
+  var NOTES={}; try{NOTES=JSON.parse(document.getElementById('notes-data').textContent)||{}}catch(e){}
+  function fill(listId,items){var ul=document.getElementById(listId);ul.textContent='';(items||[]).forEach(function(t){var li=document.createElement('li');li.textContent=t;ul.appendChild(li)})}
+  function notes(id){
+    var n=NOTES[id]||{};
+    fill('n-click-list',n.click); document.getElementById('n-click').hidden=!(n.click&&n.click.length);
+    document.getElementById('n-say-text').textContent=n.say||''; document.getElementById('n-say').hidden=!n.say;
+    fill('n-q-list',n.questions); document.getElementById('n-q').hidden=!(n.questions&&n.questions.length);
+  }
+  var qIdx=ids.filter(function(id){var n=NOTES[id];return n&&n.questions&&n.questions.length});
+  var qTotal=qIdx.reduce(function(a,id){return a+NOTES[id].questions.length},0);
+  var qbtn=document.getElementById('qbtn');
+  if(qTotal){qbtn.hidden=false;qbtn.textContent=qTotal+' open question'+(qTotal>1?'s':'')+' \u2192';qbtn.title='Jump to the next screen with open questions';
+    qbtn.onclick=function(){for(var k=1;k<=slides.length;k++){var j=(cur+k)%slides.length;if(qIdx.indexOf(ids[j])>=0){show(j);return}}}}
   function fit(){
     var s=slides[cur], f=s.querySelector('.fit'), sc=s.querySelector('.screen'), w=stage.clientWidth;
     if(s.dataset.kind==='desk'){var k=Math.min(1,w/1440);f.style.transform='scale('+k+')';stage.style.height=Math.ceil(sc.offsetHeight*k)+'px';}
@@ -84,6 +118,7 @@ body.hidetags .screen .tag{display:none!important}
     document.getElementById('cap-uc').textContent=s.dataset.uc;
     document.getElementById('cap-title').textContent=s.dataset.title;
     document.getElementById('cap-desc').textContent=s.dataset.desc;
+    notes(s.dataset.id);
     document.getElementById('count').textContent=(cur+1)+' / '+slides.length;
     thumbs.forEach(function(t,j){t.setAttribute('aria-current',j===cur?'true':'false')});
     var th=thumbs[cur]; if(th&&th.scrollIntoView){th.scrollIntoView({block:'nearest',inline:'nearest'})}
@@ -101,9 +136,9 @@ body.hidetags .screen .tag{display:none!important}
     if(e.target.closest&&e.target.closest('input,textarea'))return;
     if(e.key==='ArrowRight'){show(cur+1)} else if(e.key==='ArrowLeft'){show(cur-1)}
   });
-  var hot=document.getElementById('t-hot'), tags=document.getElementById('t-tags');
-  function flags(){document.body.classList.toggle('hot',hot.checked);document.body.classList.toggle('hidetags',!tags.checked);fit()}
-  hot.onchange=flags; tags.onchange=flags;
+  var hot=document.getElementById('t-hot'), tags=document.getElementById('t-tags'), tn=document.getElementById('t-notes'), tq=document.getElementById('t-q');
+  function flags(){document.body.classList.toggle('hot',hot.checked);document.body.classList.toggle('hidetags',!tags.checked);document.body.classList.toggle('nonotes',!tn.checked);document.body.classList.toggle('noq',!tq.checked);fit()}
+  hot.onchange=flags; tags.onchange=flags; tn.onchange=flags; tq.onchange=flags;
   window.addEventListener('resize',fit);
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit)}
   var h=(location.hash||'').slice(1), start=Math.max(0,ids.indexOf(h));

@@ -4,7 +4,8 @@
 
 boards folder : the exported Design boards, one <ScreenId>.dc.html per screen, plus the shared components
                 TopBar.dc.html and AppNav.dc.html (optional) and canvas.json (optional, used for titles/sizes).
-carousel.json : title, brand_line, headline, app_name, screens[] {id, uc, short, title?, desc?, kind?}, nav[] {label, target, icon?}.
+carousel.json : title, brand_line, headline, app_name, nav[] {label, target, icon?},
+                screens[] {id, uc, short, title?, desc?, kind?, click?: [steps], say?: text, questions?: [open questions for the SE]}.
 out.html      : one self-contained page (shell.html from this folder is the frame). Publish it as an Artifact.
 
 Boards must be static HTML: no <sc-for> loops or {{…}} bindings except {{tagsClass}} (removed here).
@@ -71,6 +72,7 @@ def main():
         topbar = re.sub(r'<helmet>.*?</helmet>', '', inner_xdc(open(tp, encoding='utf-8').read(), 'TopBar'), flags=re.S).strip()
 
     slides, thumbs, css_all, problems = [], [], [], []
+    notes = {}
     for i, s in enumerate(cfg['screens']):
         sid = s['id']
         p = os.path.join(src, sid + '.dc.html')
@@ -109,8 +111,16 @@ def main():
         kind = s.get('kind') or ('phone' if w <= 430 or sid.startswith('Mobile') else 'desk')
         slides.append('<section class="slide" id="slide-%s" data-id="%s" data-kind="%s" data-uc="%s" data-title="%s" data-desc="%s" hidden><div class="fit"><div class="screen %s" id="s-%s">%s</div></div></section>'
                       % (sid, sid, kind, H.escape(s.get('uc', '')), H.escape(title), H.escape(desc), kind, sid, body))
-        thumbs.append('<button type="button" class="thumb" data-go="%s"><span class="tn">%02d</span><span class="tu">%s</span><span class="tt">%s</span></button>'
-                      % (sid, i + 1, H.escape(s.get('uc', '')), H.escape(s.get('short', sid))))
+        click = s.get('click') or []
+        if isinstance(click, str):
+            click = [click]
+        qs = [q if isinstance(q, str) else q.get('q', '') for q in (s.get('questions') or [])]
+        qs = [q for q in qs if q.strip()]
+        if click or s.get('say') or qs:
+            notes[sid] = {k: v for k, v in (('click', click), ('say', s.get('say', '')), ('questions', qs)) if v}
+        qmark = '<span class="tq">%d open question%s</span>' % (len(qs), 's' if len(qs) > 1 else '') if qs else ''
+        thumbs.append('<button type="button" class="thumb" data-go="%s"><span class="tn">%02d</span><span class="tu">%s</span><span class="tt">%s</span>%s</button>'
+                      % (sid, i + 1, H.escape(s.get('uc', '')), H.escape(s.get('short', sid)), qmark))
     for n in cfg.get('nav', []):
         if n['target'] not in ids:
             problems.append('nav "%s": target %s is not a screen' % (n['label'], n['target']))
@@ -126,9 +136,12 @@ def main():
                 .replace('{{COUNT}}', str(len(slides)))
                 .replace('/*SCREENCSS*/', '\n'.join(css_all))
                 .replace('<!--SLIDES-->', '\n'.join(slides))
-                .replace('<!--THUMBS-->', '\n'.join(thumbs)))
+                .replace('<!--THUMBS-->', '\n'.join(thumbs))
+                .replace('/*NOTESJSON*/', json.dumps(notes, ensure_ascii=False).replace('</', '<\\/')))
     open(out_path, 'w', encoding='utf-8').write(out)
-    print('ok: %d screens, %d KB -> %s' % (len(slides), len(out) // 1024, out_path))
+    nq = sum(len(n.get('questions', [])) for n in notes.values())
+    nn = sum(1 for n in notes.values() if n.get('click') or n.get('say'))
+    print('ok: %d screens, %d with presenter notes, %d open questions, %d KB -> %s' % (len(slides), nn, nq, len(out) // 1024, out_path))
 
 
 if __name__ == '__main__':

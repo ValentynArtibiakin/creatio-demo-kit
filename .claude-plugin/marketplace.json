@@ -9,7 +9,7 @@
       "name": "creatio-demo-kit",
       "source": "./",
       "description": "Demo script → clickable walkthrough carousel of Creatio screens",
-      "version": "0.2.0"
+      "version": "0.3.0"
     }
   ]
 }

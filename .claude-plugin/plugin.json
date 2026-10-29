@@ -1,6 +1,6 @@
 {
   "name": "creatio-demo-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "displayName": "Creatio Demo Kit",
   "description": "Turn a Creatio demo script into a clickable walkthrough carousel: one Creatio Freedom UI screen per demo step, client branding, data from the script, build labels OOTB / Config / New / Custom / Demo mock, published as one Artifact link - to discuss the scenario with the SE and hand it to the consultants.",
   "author": {
