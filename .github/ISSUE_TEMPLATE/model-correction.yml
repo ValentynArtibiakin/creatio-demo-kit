@@ -1,0 +1,19 @@
+name: Model correction
+description: A price, risk or rule in the estimator is wrong for everyone, not only for you
+title: "Model: "
+labels: ["estimate", "model"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong
+      description: Unit / risk / era / calendar parameter, current value → proposed value.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Evidence
+      description: Demos where you saw it, with hours or days.
+    validations:
+      required: true

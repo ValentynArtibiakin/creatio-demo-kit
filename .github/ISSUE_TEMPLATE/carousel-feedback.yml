@@ -1,0 +1,41 @@
+name: Carousel feedback
+description: The walkthrough carousel came out wrong, slow or not as expected
+title: "Carousel: "
+labels: ["carousel", "feedback"]
+body:
+  - type: input
+    id: demo
+    attributes:
+      label: Kind of demo
+      description: Industry and kind of script, e.g. "bank, lending, 4 UC" or "field service, mobile". PUBLIC REPO - no customer names, people, stand URLs or credentials.
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where it went wrong
+      options:
+        - 1. Screen list from the script
+        - 2. Drawing the boards (Design canvas)
+        - 3. Export of the boards
+        - 4. make_carousel.py build
+        - 5. Publishing / the result
+        - It worked, this is a suggestion
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what you expected
+      description: Screen ids, the error text from make_carousel.py, a link to the published carousel if you can share it.
+    validations:
+      required: true
+  - type: input
+    id: time
+    attributes:
+      label: How long it took (minutes, roughly)
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: "`claude plugin list` shows it"

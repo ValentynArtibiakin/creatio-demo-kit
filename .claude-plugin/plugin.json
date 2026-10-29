@@ -1,0 +1,18 @@
+{
+  "name": "creatio-demo-kit",
+  "version": "0.1.0",
+  "displayName": "Creatio Demo Kit",
+  "description": "Two tools for checking a Creatio demo script before the build: a clickable walkthrough carousel of the demo screens (Creatio Freedom UI look, build labels, one Artifact link to agree scope with the SE) and an agent that estimates the build and handover days, the risks and what to cut, and learns from each delivered demo.",
+  "author": {
+    "name": "Valentyn Artibiakin @Creatio",
+    "email": "v.artibiakin@creatio.com"
+  },
+  "repository": "https://github.com/ValentynArtibiakin/creatio-demo-kit",
+  "keywords": [
+    "creatio",
+    "demo",
+    "estimate",
+    "walkthrough",
+    "prototype"
+  ]
+}
