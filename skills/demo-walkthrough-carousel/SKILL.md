@@ -68,11 +68,12 @@ It prints how many screens have presenter notes and how many open questions ther
 
 ## 5. Check and publish
 - Open the html in the browser pane. Click through the whole path with ← → and with the outlined elements. Check the phone screens, the "Click / Say" and "Open questions" blocks, and the toggles (Build labels, Presenter notes, Open questions).
-- Publish it with `Artifact` (publish, `file_path` = the html, icon `slides`). Give the user the link and one line: how many open questions there are to go through with the SE.
+- Publish it with `Artifact` (publish, `file_path` = the html, icon `slides`, `capabilities: {"comments": {"composer_only": true, "customAnchors": true}}`). The capability turns on the comment layer: a **💬 Comment** button; the viewer clicks a field, a table row, a KPI, a DCM stage or a Click / Say / question line and comments on exactly that. Each comment carries its screen id, block, row and element text, so you know where it belongs. If the publish is refused with `capabilities.comments: unavailable`, drop `"customAnchors": true` and publish again (comments then use the shell's own anchoring, and the button stays hidden).
+- Give the user the link and one line: how many open questions there are to go through with the SE. Add that only people the link is shared with at comment level or above can comment, and that sharing is done from the Share menu.
 - On changes: edit the board in the design, export it again, rebuild, and publish to the same file path so the link stays the same.
 
 ## 6. After the SE call: answers in, then the handover
-- The user brings the SE's answers. For each answer: change the board or the notes if it changes them, and remove that question from `carousel.json`. A question the SE could not answer stays.
+- The user brings the SE's answers, or asks you to apply the comments on the carousel. To read comments, use the `ArtifactComments` tool on the carousel's URL. Sort each comment: a concrete change goes into the board or the notes; an answer to an open question goes in and the question is removed from `carousel.json`; anything ambiguous, contradictory or changing the scope goes back to the user as a list, not into the boards. A question the SE could not answer stays. Do not reply to or resolve threads in the user's name; offer reply texts instead.
 - Rebuild and republish to the same link. When the open-question counter reaches 0 and the user says the scenario is agreed, the carousel is the **consultant version**. Check that every screen has `click` and `say`, and fill any that are missing.
 - Give the user the link for the consultants and one line: the consultant leads the demo with ← → and reads "Click" and "Say" on each step.
 

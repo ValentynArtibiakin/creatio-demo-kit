@@ -145,3 +145,90 @@ body.noq .note.q,body.noq .thumb .tq,body.noq #qbtn{display:none}
   flags(); show(start,true);
 })();
 </script>
+
+<!-- Comment layer: comment on a field, a table row or a presenter note. Needs capabilities {"comments":{"composer_only":true,"customAnchors":true}} on publish; without it the button stays hidden. -->
+<style>
+#cm-btn{position:fixed;right:18px;bottom:18px;z-index:50;display:none;align-items:center;gap:8px;padding:10px 16px;border-radius:22px;border:0;background:#5B2BD6;color:#fff;font:600 14px Montserrat,Roboto,Arial,sans-serif;box-shadow:0 6px 18px rgba(91,43,214,.35);cursor:pointer}
+#cm-btn.on{background:#1F2937}
+#cm-tip{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:50;display:none;padding:8px 14px;border-radius:8px;background:#1F2937;color:#fff;font:500 13px Montserrat,Roboto,Arial,sans-serif}
+body.cm-pick #cm-tip{display:block}
+body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-pick #n-q li{cursor:crosshair!important}
+.cm-hover{outline:2px solid #7B4DFF!important;outline-offset:1px;background-color:rgba(123,77,255,.06)}
+</style>
+<button type="button" id="cm-btn" aria-pressed="false">💬 Comment</button>
+<div id="cm-tip">Click a field, row or note to comment on it · Esc to stop</div>
+<script>
+(function(){
+  var btn=document.getElementById('cm-btn'), on=false, shellMode=false, ctl=null, threads=[], hoverEl=null, known={};
+  function slideOf(el){var s=el.closest&&el.closest('section.slide');return s||null}
+  function curSlide(){return document.querySelector('section.slide:not([hidden])')}
+  function curId(){var s=curSlide();return s?s.dataset.id:''}
+  function txt(el){return (el.textContent||'').replace(/\s+/g,' ').trim()}
+  // Pick the meaningful element under the click: a table cell, a field, a card, a chip, a note line.
+  function pick(t){
+    if(!t||!t.closest)return null;
+    var note=t.closest('#n-click li,#n-say-text,#n-q li');
+    if(note)return note;
+    if(!t.closest('#stage'))return null;
+    return t.closest('td,th,.fv,.fl,.kpi,.st,.chip,.aic,.btn,.bot,.you,.ask,.tile,.it,.f,.li,.hb,h1,h3,.ct,li,a,.card')||t;
+  }
+  function describe(el){
+    var sid=curId(), note=el.closest('#n-click li,#n-say-text,#n-q li');
+    if(note){var kind=el.closest('#n-q')?'Question':el.closest('#n-click')?'Click step':'Say';return {target:document.querySelector('.thumb[data-go="'+sid+'"]')||el,label:sid+' · '+kind+': '+txt(el).slice(0,90),detail:kind+' on screen '+sid+': '+txt(el)}}
+    var row=el.closest('tr'), card=el.closest('.card,.kpi,.tile');
+    var head=card&&card.querySelector('.ct,h3,.l');
+    var label=sid+' · '+txt(el).slice(0,80);
+    var detail='Screen '+sid+(head?' · block "'+txt(head).slice(0,80)+'"':'')+(row&&row!==el?' · row "'+txt(row).slice(0,160)+'"':'')+' · element "'+txt(el).slice(0,200)+'"';
+    return {target:el,label:label,detail:detail};
+  }
+  function setPick(v){on=v;document.body.classList.toggle('cm-pick',v);btn.classList.toggle('on',v);btn.setAttribute('aria-pressed',v?'true':'false');btn.textContent=v?'✕ Stop commenting':'💬 Comment';if(!v&&hoverEl){hoverEl.classList.remove('cm-hover');hoverEl=null}}
+  function active(){return on||shellMode}
+  function point(el){
+    if(!el||!el.isConnected)return null;
+    var s=slideOf(el); if(s&&s.hidden)return null;
+    var r=el.getBoundingClientRect(); if(!r.width&&!r.height)return null;
+    return {x:r.left+Math.min(r.width-4,Math.max(8,r.width*0.9))+scrollX,y:r.top+Math.min(14,r.height/2)+scrollY};
+  }
+  function find(anchor){
+    if(known[anchor]&&known[anchor].isConnected)return known[anchor];
+    try{return document.querySelector(anchor)}catch(e){return null}
+  }
+  function report(){
+    if(!ctl)return; var map={};
+    threads.forEach(function(t){map[t.id]=point(find(t.anchor))});
+    try{ctl.placed(map)}catch(e){}
+  }
+  var raf=0; function soon(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;report()})}
+  document.addEventListener('mouseover',function(e){if(!active())return;var el=pick(e.target);if(el===hoverEl)return;if(hoverEl)hoverEl.classList.remove('cm-hover');hoverEl=el;if(el)el.classList.add('cm-hover')},true);
+  document.addEventListener('click',function(e){
+    if(!active()||!ctl)return;
+    if(e.target.closest('#cm-btn,.top,.thumb,label,input'))return;
+    var el=pick(e.target); if(!el)return;
+    e.preventDefault(); e.stopPropagation();
+    var d=describe(el), pair;
+    try{pair=ctl.domAnchor(d.target,e)}catch(err){return}
+    known[pair[0]]=d.target;
+    ctl.compose(pair[0],pair[1],{label:d.label,detail:d.detail}).catch(function(){});
+  },true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&on){setPick(false);if(ctl)ctl.exitMode()}});
+  btn.onclick=function(){setPick(!on);if(!on&&ctl)ctl.exitMode()};
+  new MutationObserver(soon).observe(document.getElementById('stage')||document.body,{subtree:true,attributes:true,attributeFilter:['hidden','style']});
+  window.addEventListener('resize',soon);
+  if(!window.claude||!claude.use)return;
+  claude.use('comments').then(function(c){
+    if(!c||!c.customAnchors)return;
+    return c.customAnchors({
+      mode:function(v){shellMode=v;if(!v)setPick(false);else document.body.classList.add('cm-pick')},
+      threads:function(list){threads=list||[];report()},
+      reveal:function(id){
+        var t=threads.filter(function(x){return x.id===id})[0]; if(!t)return;
+        var el=find(t.anchor); if(!el)return;
+        var s=slideOf(el);
+        if(s&&s.hidden){var th=document.querySelector('.thumb[data-go="'+s.dataset.id+'"]');if(th)th.click()}
+        setTimeout(function(){el.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});soon()},60);
+      },
+      composing:function(){}
+    }).then(function(x){ctl=x;btn.style.display='inline-flex';report()});
+  }).catch(function(){});
+})();
+</script>
