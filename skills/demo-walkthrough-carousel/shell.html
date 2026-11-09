@@ -46,9 +46,32 @@ body.hidetags .wk-screen .tag{display:none!important}
 .wk-note.wk-q h2{color:var(--hot)}
 .wk-qbtn{font:600 13px var(--display);padding:7px 12px;border-radius:20px;border:1px solid var(--hot);background:var(--panel);color:var(--hot);cursor:pointer;min-height:36px}
 .wk-thumb .wk-tq{font-size:11px;font-weight:700;color:var(--hot)}
+.wk-note.wk-steps{grid-column:1/-1}
+.wk-steps ol{padding-left:0;list-style:none;counter-reset:st;gap:10px}
+.wk-step{counter-increment:st;display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 10px;padding-top:8px;border-top:1px solid var(--line)}
+.wk-step:first-child{border-top:0;padding-top:0}
+.wk-step::before{content:counter(st);grid-row:1/span 6;width:24px;height:24px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:700 12px/24px var(--display);text-align:center}
+.wk-steps ol.wk-single .wk-step{grid-template-columns:minmax(0,1fr)}
+.wk-steps ol.wk-single .wk-step::before{display:none}
+.wk-who{justify-self:start;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:1px 8px}
+.wk-step-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 16px}
+.wk-do b,.wk-happens b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.wk-do p,.wk-happens p,.wk-say p{margin:0;white-space:pre-line}
+.wk-say summary{cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.wk-att,.wk-iss{border-radius:8px;padding:6px 10px;font-size:13px}
+.wk-att{background:rgba(245,124,31,.12);border-left:3px solid var(--hot)}
+.wk-iss{background:rgba(212,46,46,.12);border-left:3px solid #D42E2E}
+.wk-ucnav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.wk-ucnav[hidden]{display:none}
+.wk-area{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-left:6px}
+.wk-area:first-child{margin-left:0}
+.wk-ucbtn{font:600 13px var(--display);padding:6px 12px;border-radius:18px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;min-height:34px}
+.wk-ucbtn[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.wk-navbar{display:none;justify-content:center;align-items:center;gap:10px}
+body.wk-bottomnav .wk-navbar{display:flex}
 body.nonotes .wk-note.wk-n{display:none}
 body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
-@media print{.wk-ctrls,.wk-thumbs,.wk-hint{display:none!important}}
+@media print{.wk-ctrls,.wk-thumbs,.wk-hint,.wk-ucnav,.wk-navbar{display:none!important}.wk-say[open],.wk-say{display:block}}
 .wk-thumb{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-family:var(--display);cursor:pointer;min-width:132px;text-align:left}
 .wk-thumb .wk-tn{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 .wk-thumb .wk-tu{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--accent)}
@@ -73,8 +96,10 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
       <button type="button" class="wk-btn wk-primary" id="next" aria-label="Next screen">Next →</button>
     </div>
   </div>
+  <nav class="wk-ucnav" id="ucnav" aria-label="Use cases" hidden><!--UCNAV--></nav>
   <div class="wk-cap"><span class="wk-uc" id="cap-uc">Start</span><h1 id="cap-title"></h1><span class="wk-hint">Click the outlined elements inside the screen, or use ← →</span><p id="cap-desc"></p></div>
   <div class="wk-notes" id="notes">
+    <section class="wk-note wk-n wk-steps" id="n-steps" hidden><h2>Steps</h2><ol id="n-steps-list"></ol></section>
     <section class="wk-note wk-n" id="n-click" hidden><h2>Click</h2><ol id="n-click-list"></ol></section>
     <section class="wk-note wk-n" id="n-say" hidden><h2>Say</h2><p id="n-say-text"></p></section>
     <section class="wk-note wk-q" id="n-q" hidden><h2>Open questions for the SE</h2><ul id="n-q-list"></ul></section>
@@ -82,6 +107,7 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
   <div class="wk-stage" id="stage">
 <!--SLIDES-->
   </div>
+  <div class="wk-navbar" id="navbar"></div>
   <nav class="wk-thumbs" aria-label="All screens">
 <!--THUMBS-->
   </nav>
@@ -93,12 +119,31 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
   var ids=slides.map(function(s){return s.dataset.id});
   var thumbs=[].slice.call(document.querySelectorAll('.wk-thumb'));
   var stage=document.getElementById('stage'), cur=0;
+  var ucbtns=[].slice.call(document.querySelectorAll('.wk-ucbtn')); if(ucbtns.length>1)document.getElementById('ucnav').hidden=false;
   var NOTES={}; try{NOTES=JSON.parse(document.getElementById('notes-data').textContent)||{}}catch(e){}
   function fill(listId,items){var ul=document.getElementById(listId);ul.textContent='';(items||[]).forEach(function(t){var li=document.createElement('li');li.textContent=t;ul.appendChild(li)})}
+  var CFG=NOTES.__cfg||{}; delete NOTES.__cfg;
+  var BLOCKS=CFG.step_blocks||['who','do','happens','say','attention','issue'];
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+  function block(cls,label,text){var d=el('div',cls);d.appendChild(el('b',null,label));d.appendChild(el('p',null,text));return d}
+  function steps(list){
+    var ol=document.getElementById('n-steps-list'); ol.textContent=''; ol.classList.toggle('wk-single',list.length<2);
+    list.forEach(function(st,i){
+      var li=el('li','wk-step'); li.dataset.step=i+1;
+      var on=function(k){return BLOCKS.indexOf(k)>=0&&st[k]};
+      if(on('who'))li.appendChild(el('span','wk-who',st.who));
+      if(on('do')||on('happens')){var g=el('div','wk-step-grid');if(on('do'))g.appendChild(block('wk-do','Do',st['do']));if(on('happens'))g.appendChild(block('wk-happens','What happens',st.happens));li.appendChild(g)}
+      if(on('say')){var d=el('details','wk-say');d.appendChild(el('summary',null,'Say'));d.appendChild(el('p',null,st.say));li.appendChild(d)}
+      if(on('attention'))li.appendChild(el('div','wk-att','Attention: '+st.attention));
+      if(on('issue'))li.appendChild(el('div','wk-iss','Issue: '+st.issue));
+      ol.appendChild(li);
+    });
+  }
   function notes(id){
-    var n=NOTES[id]||{};
-    fill('n-click-list',n.click); document.getElementById('n-click').hidden=!(n.click&&n.click.length);
-    document.getElementById('n-say-text').textContent=n.say||''; document.getElementById('n-say').hidden=!n.say;
+    var n=NOTES[id]||{}, hasSteps=!!(n.steps&&n.steps.length);
+    if(hasSteps)steps(n.steps); document.getElementById('n-steps').hidden=!hasSteps;
+    fill('n-click-list',hasSteps?[]:n.click); document.getElementById('n-click').hidden=hasSteps||!(n.click&&n.click.length);
+    document.getElementById('n-say-text').textContent=n.say||''; document.getElementById('n-say').hidden=hasSteps||!n.say;
     fill('n-q-list',n.questions); document.getElementById('n-q').hidden=!(n.questions&&n.questions.length);
   }
   var qIdx=ids.filter(function(id){var n=NOTES[id];return n&&n.questions&&n.questions.length});
@@ -121,6 +166,7 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
     notes(s.dataset.id);
     document.getElementById('count').textContent=(cur+1)+' / '+slides.length;
     thumbs.forEach(function(t,j){t.setAttribute('aria-current',j===cur?'true':'false')});
+    ucbtns.forEach(function(b){b.setAttribute('aria-current',b.dataset.uc===s.dataset.uc?'true':'false')});
     var th=thumbs[cur], strip=th&&th.parentNode; if(th&&strip){strip.scrollLeft=th.offsetLeft-strip.offsetLeft-(strip.clientWidth-th.offsetWidth)/2}
     if(!noHash){try{history.replaceState(null,'','#'+s.dataset.id)}catch(e){}}
     fit();
@@ -141,6 +187,7 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
   hot.onchange=flags; tags.onchange=flags; tn.onchange=flags; tq.onchange=flags;
   window.addEventListener('resize',fit);
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit)}
+  if(CFG.layout==='bottom-nav'){var nb=document.getElementById('navbar');['prev','count','next'].forEach(function(x){nb.appendChild(document.getElementById(x))});document.body.classList.add('wk-bottomnav')}
   var h=(location.hash||'').slice(1), start=Math.max(0,ids.indexOf(h));
   flags(); show(start,true);
 })();
@@ -152,7 +199,7 @@ body.noq .wk-note.wk-q,body.noq .wk-thumb .wk-tq,body.noq #qbtn{display:none}
 #cm-btn.wk-on{background:#1F2937}
 #cm-tip{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:50;display:none;padding:8px 14px;border-radius:8px;background:#1F2937;color:#fff;font:500 13px Montserrat,Roboto,Arial,sans-serif}
 body.cm-pick #cm-tip{display:block}
-body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-pick #n-q li{cursor:crosshair!important}
+body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-pick #n-q li,body.cm-pick #n-steps .wk-step *{cursor:crosshair!important}
 .cm-hover{outline:2px solid #7B4DFF!important;outline-offset:1px;background-color:rgba(123,77,255,.06)}
 </style>
 <button type="button" id="cm-btn" aria-pressed="false">💬 Comment</button>
@@ -167,14 +214,14 @@ body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-
   // Pick the meaningful element under the click: a table cell, a field, a card, a chip, a note line.
   function pick(t){
     if(!t||!t.closest)return null;
-    var note=t.closest('#n-click li,#n-say-text,#n-q li');
+    var note=t.closest('#n-click li,#n-say-text,#n-q li,#n-steps .wk-who,#n-steps .wk-do,#n-steps .wk-happens,#n-steps .wk-say,#n-steps .wk-att,#n-steps .wk-iss');
     if(note)return note;
     if(!t.closest('#stage'))return null;
     return t.closest('td,th,.fv,.fl,.kpi,.st,.chip,.aic,.btn,.bot,.you,.ask,.tile,.it,.f,.li,.hb,h1,h3,.ct,li,a,.card')||t;
   }
   function describe(el){
-    var sid=curId(), note=el.closest('#n-click li,#n-say-text,#n-q li');
-    if(note){var kind=el.closest('#n-q')?'Question':el.closest('#n-click')?'Click step':'Say';return {target:document.querySelector('.wk-thumb[data-go="'+sid+'"]')||el,label:sid+' · '+kind+': '+txt(el).slice(0,90),detail:kind+' on screen '+sid+': '+txt(el)}}
+    var sid=curId(), note=el.closest('#n-click li,#n-say-text,#n-q li,#n-steps .wk-who,#n-steps .wk-do,#n-steps .wk-happens,#n-steps .wk-say,#n-steps .wk-att,#n-steps .wk-iss');
+    if(note){var stp=el.closest('.wk-step'), part=el.closest('.wk-who')?'Who':el.closest('.wk-do')?'Do':el.closest('.wk-happens')?'What happens':el.closest('.wk-say')?'Say':el.closest('.wk-att')?'Attention':el.closest('.wk-iss')?'Issue':'';var kind=stp?'Step '+stp.dataset.step+' · '+part:el.closest('#n-q')?'Question':el.closest('#n-click')?'Click step':'Say';var nt=txt(el.querySelector(':scope > p')||el);return {target:document.querySelector('.wk-thumb[data-go="'+sid+'"]')||el,label:sid+' · '+kind+': '+nt.slice(0,90),detail:kind+' on screen '+sid+': '+nt}}
     var row=el.closest('tr'), card=el.closest('.card,.kpi,.tile');
     var head=card&&card.querySelector('.ct,h3,.l');
     var label=sid+' · '+txt(el).slice(0,80);
@@ -202,7 +249,7 @@ body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-
   document.addEventListener('mouseover',function(e){if(!active())return;var el=pick(e.target);if(el===hoverEl)return;if(hoverEl)hoverEl.classList.remove('cm-hover');hoverEl=el;if(el)el.classList.add('cm-hover')},true);
   document.addEventListener('click',function(e){
     if(!active()||!ctl)return;
-    if(e.target.closest('#cm-btn,.wk-top,.wk-thumb,label,input'))return;
+    if(e.target.closest('#cm-btn,.wk-top,.wk-thumb,.wk-ucnav,.wk-navbar,summary,label,input'))return;
     var el=pick(e.target); if(!el)return;
     e.preventDefault(); e.stopPropagation();
     var d=describe(el), pair;

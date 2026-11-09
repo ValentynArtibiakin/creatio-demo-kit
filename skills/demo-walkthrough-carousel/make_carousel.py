@@ -4,8 +4,11 @@
 
 boards folder : the exported Design boards, one <ScreenId>.dc.html per screen, plus the shared components
                 TopBar.dc.html and AppNav.dc.html (optional) and canvas.json (optional, used for titles/sizes).
-carousel.json : title, brand_line, headline, app_name, nav[] {label, target, icon?},
-                screens[] {id, uc, short, title?, desc?, kind?, click?: [steps], say?: text, questions?: [open questions for the SE]}.
+carousel.json : title, brand_line, headline, app_name, nav[] {label, target, icon?, color?}, nav_width? (px, default 200),
+                screens[] {id, uc, area?, short, title?, desc?, kind?, steps?: [step], questions?: [open questions for the SE]},
+                cards? [files of steps with a "screen" key, relative to carousel.json], uc_titles? {UC1: "…"},
+                step_blocks? (which step blocks to show, default all), layout? ("bottom-nav" puts Prev / Next under the screen).
+                A step is {who?, do, happens?, say?, attention?, issue?}. The older click [..] / say "…" per screen still works.
 out.html      : one self-contained page (shell.html from this folder is the frame). Publish it as an Artifact.
 
 Boards must be static HTML: no <sc-for> loops or {{…}} bindings except {{tagsClass}} (removed here).
@@ -82,13 +85,17 @@ def scope_css(css, sid, problems=None, owner=''):
 
 
 def appnav(cfg, active):
-    out = ['<div style="width:200px;box-sizing:border-box;color:#fff;display:flex;flex-direction:column;gap:2px;padding:6px 0 12px">',
+    out = ['<div style="width:%dpx;box-sizing:border-box;color:#fff;display:flex;flex-direction:column;gap:2px;padding:6px 0 12px">' % int(cfg.get('nav_width', 200)),
            '<div style="margin:0 12px 12px;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,.16);font-size:12px;color:#E3E8F0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E3E8F0" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5"></path></svg><span>Search app…</span></div>',
            '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 16px 14px;font-size:14px;font-weight:600"><span>%s</span><span aria-hidden="true" style="font-size:10px">▼</span></div>' % H.escape(cfg.get('app_name', ''))]
     for n in cfg.get('nav', []):
         bg = ';background:rgba(255,255,255,.2)' if n['label'] == active else ''
-        out.append('<a data-go="%s" href="#%s" style="display:flex;align-items:center;gap:12px;padding:11px 16px;color:#fff;text-decoration:none;font-size:14px;font-weight:600%s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="%s"></path></svg><span>%s</span></a>'
-                   % (n['target'], n['target'], bg, n.get('icon') or DEFAULT_ICON, H.escape(n['label'])))
+        svg = ('<svg width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="%s"></path></svg>'
+               % (((16, 16) if n.get('color') else (20, 20)) + (n.get('icon') or DEFAULT_ICON,)))
+        if n.get('color'):  # coloured rounded-square icon, as in the Freedom UI app menu
+            svg = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:%s;flex:0 0 26px">%s</span>' % (H.escape(n['color']), svg)
+        out.append('<a data-go="%s" href="#%s" style="display:flex;align-items:center;gap:12px;padding:%s;color:#fff;text-decoration:none;font-size:14px;font-weight:600%s">%s<span>%s</span></a>'
+                   % (n['target'], n['target'], '8px 16px' if n.get('color') else '11px 16px', bg, svg, H.escape(n['label'])))
     out.append('</div>')
     return ''.join(out)
 
@@ -111,6 +118,33 @@ def main():
 
     slides, thumbs, css_all, problems = [], [], [], []
     notes = {}
+    step_keys = ('who', 'do', 'happens', 'say', 'attention', 'issue')
+
+    def clean_step(st, where):
+        if isinstance(st, str):
+            st = {'do': st}
+        unknown = [k for k in st if k not in step_keys + ('screen', 'uc')]
+        if unknown:
+            problems.append('%s: unknown step field(s) %s' % (where, ', '.join(unknown)))
+        out_st = {k: str(st[k]).strip() for k in step_keys if st.get(k) and str(st[k]).strip()}
+        if not out_st.get('do') and not out_st.get('happens'):
+            problems.append('%s: a step without "do" or "happens"' % where)
+        return out_st
+
+    extra_steps = {}
+    base = os.path.dirname(os.path.abspath(cfg_path))
+    for f in cfg.get('cards', []):
+        fp = f if os.path.isabs(f) else os.path.join(base, f)
+        if not os.path.exists(fp):
+            problems.append('cards file %s not found' % f)
+            continue
+        data = json.load(open(fp, encoding='utf-8'))
+        for k, st in enumerate(data if isinstance(data, list) else data.get('steps', [])):
+            scr = st.get('screen') if isinstance(st, dict) else None
+            if scr not in ids:
+                problems.append('%s step %d: unknown screen "%s"' % (os.path.basename(f), k + 1, scr))
+                continue
+            extra_steps.setdefault(scr, []).append(clean_step(st, '%s step %d' % (os.path.basename(f), k + 1)))
     for i, s in enumerate(cfg['screens']):
         sid = s['id']
         p = os.path.join(src, sid + '.dc.html')
@@ -154,11 +188,27 @@ def main():
             click = [click]
         qs = [q if isinstance(q, str) else q.get('q', '') for q in (s.get('questions') or [])]
         qs = [q for q in qs if q.strip()]
-        if click or s.get('say') or qs:
-            notes[sid] = {k: v for k, v in (('click', click), ('say', s.get('say', '')), ('questions', qs)) if v}
+        stp = [clean_step(st, '%s step %d' % (sid, k + 1)) for k, st in enumerate(s.get('steps') or [])] + extra_steps.get(sid, [])
+        if click or s.get('say') or qs or stp:
+            notes[sid] = {k: v for k, v in (('steps', stp), ('click', click), ('say', s.get('say', '')), ('questions', qs)) if v}
         qmark = '<span class="wk-tq">%d open question%s</span>' % (len(qs), 's' if len(qs) > 1 else '') if qs else ''
         thumbs.append('<button type="button" class="wk-thumb" data-go="%s"><span class="wk-tn">%02d</span><span class="wk-tu">%s</span><span class="wk-tt">%s</span>%s</button>'
                       % (sid, i + 1, H.escape(s.get('uc', '')), H.escape(s.get('short', sid)), qmark))
+    # use-case switcher: one button per use case (first screen), grouped by area
+    ucnav, seen, groups = [], set(), {}
+    titles = cfg.get('uc_titles', {})
+    for s in cfg['screens']:
+        uc = s.get('uc', '')
+        if not uc or uc in seen:
+            continue
+        seen.add(uc)
+        label = uc + (' · ' + titles[uc] if titles.get(uc) else '')
+        groups.setdefault(s.get('area', ''), []).append(
+            '<button type="button" class="wk-ucbtn" data-go="%s" data-uc="%s">%s</button>' % (s['id'], H.escape(uc), H.escape(label)))
+    for area, buttons in groups.items():  # areas in order of first appearance
+        if area:
+            ucnav.append('<span class="wk-area">%s</span>' % H.escape(area))
+        ucnav += buttons
     for n in cfg.get('nav', []):
         if n['target'] not in ids:
             problems.append('nav "%s": target %s is not a screen' % (n['label'], n['target']))
@@ -175,11 +225,17 @@ def main():
                 .replace('/*SCREENCSS*/', '\n'.join(css_all))
                 .replace('<!--SLIDES-->', '\n'.join(slides))
                 .replace('<!--THUMBS-->', '\n'.join(thumbs))
-                .replace('/*NOTESJSON*/', json.dumps(notes, ensure_ascii=False).replace('</', '<\\/')))
+                .replace('<!--UCNAV-->', ''.join(ucnav))
+                .replace('/*NOTESJSON*/', json.dumps(dict(notes, __cfg={k: cfg[k] for k in ('step_blocks', 'layout') if k in cfg}), ensure_ascii=False).replace('</', '<\\/')))
     open(out_path, 'w', encoding='utf-8').write(out)
     nq = sum(len(n.get('questions', [])) for n in notes.values())
-    nn = sum(1 for n in notes.values() if n.get('click') or n.get('say'))
-    print('ok: %d screens, %d with presenter notes, %d open questions, %d KB -> %s' % (len(slides), nn, nq, len(out) // 1024, out_path))
+    ns = sum(len(n.get('steps', [])) for n in notes.values())
+    with_text = [sid for sid in ids if notes.get(sid, {}).get('steps') or notes.get(sid, {}).get('click') or notes.get(sid, {}).get('say')]
+    without = [sid for sid in ids if sid not in with_text]
+    print('ok: %d screens, %d steps, %d screens with presenter text, %d open questions, %d use cases, %d KB -> %s'
+          % (len(slides), ns, len(with_text), nq, len(seen), len(out) // 1024, out_path))
+    if without:
+        print('screens without presenter text: %d (%s)' % (len(without), ', '.join(without)))
 
 
 if __name__ == '__main__':
