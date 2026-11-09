@@ -28,18 +28,56 @@ def inner_xdc(t, name):
     return m.group(1)
 
 
-def scope_css(css, sid):
+def css_blocks(css):
+    """Top-level (prelude, body) pairs; body keeps nested braces. Statements like @import yield (stmt, None)."""
+    i, n = 0, len(css)
+    while i < n:
+        j = i
+        while j < n and css[j] not in '{};':
+            j += 1
+        if j >= n:
+            return
+        prelude = css[i:j].strip()
+        if css[j] == ';':
+            if prelude:
+                yield prelude, None
+            i = j + 1
+            continue
+        if css[j] == '}':
+            i = j + 1
+            continue
+        depth, k = 1, j + 1
+        while k < n and depth:
+            depth += {'{': 1, '}': -1}.get(css[k], 0)
+            k += 1
+        yield prelude, css[j + 1:k - 1]
+        i = k
+
+
+def scope_css(css, sid, problems=None, owner=''):
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
     out = []
-    for m in re.finditer(r'([^{}]+)\{([^{}]*)\}', css):
-        sel = []
-        for s in [x.strip() for x in m.group(1).split(',')]:
-            if s in ('body', 'html', ':root'):
-                sel.append('#' + sid)
-            elif s == '*':
-                sel += ['#' + sid, '#' + sid + ' *']
-            else:
-                sel.append('#' + sid + ' ' + s)
-        out.append(','.join(sel) + '{' + m.group(2) + '}')
+    for prelude, body in css_blocks(css):
+        low = prelude.lower()
+        if body is None:                                   # @import / @charset: fonts come from the shell
+            continue
+        if low.startswith(('@media', '@supports', '@container', '@layer')):
+            out.append(prelude + '{' + scope_css(body, sid, problems, owner) + '}')
+        elif low.startswith(('@keyframes', '@-webkit-keyframes', '@font-face', '@property', '@page')):
+            out.append(prelude + '{' + body + '}')
+        elif low.startswith('@'):
+            if problems is not None:
+                problems.append('%s: unsupported CSS rule %s - left out' % (owner, prelude.split()[0]))
+        else:
+            sel = []
+            for s in [x.strip() for x in prelude.split(',') if x.strip()]:
+                if s in ('body', 'html', ':root'):
+                    sel.append('#' + sid)
+                elif s == '*':
+                    sel += ['#' + sid, '#' + sid + ' *']
+                else:
+                    sel.append('#' + sid + ' ' + s)
+            out.append(','.join(sel) + '{' + body + '}')
     return '\n'.join(out)
 
 
@@ -82,7 +120,7 @@ def main():
         body = inner_xdc(open(p, encoding='utf-8').read(), sid)
         hel = re.search(r'<helmet>(.*?)</helmet>', body, re.S)
         if hel:
-            css_all.append(scope_css(''.join(re.findall(r'<style>(.*?)</style>', hel.group(1), re.S)), 's-' + sid))
+            css_all.append(scope_css(''.join(re.findall(r'<style>(.*?)</style>', hel.group(1), re.S)), 's-' + sid, problems, sid))
             body = body.replace(hel.group(0), '')
         title, desc = s.get('title'), s.get('desc')
         # a dark caption bar at the top of a board (used on phone boards) becomes the slide caption
@@ -109,7 +147,7 @@ def main():
                 problems.append('%s: link to %s, which is not in carousel.json screens' % (sid, target))
         w = canvas.get(sid + '.dc.html', {}).get('w', 1440)
         kind = s.get('kind') or ('phone' if w <= 430 or sid.startswith('Mobile') else 'desk')
-        slides.append('<section class="slide" id="slide-%s" data-id="%s" data-kind="%s" data-uc="%s" data-title="%s" data-desc="%s" hidden><div class="fit"><div class="screen %s" id="s-%s">%s</div></div></section>'
+        slides.append('<section class="wk-slide" id="slide-%s" data-id="%s" data-kind="%s" data-uc="%s" data-title="%s" data-desc="%s" hidden><div class="wk-fit"><div class="wk-screen wk-%s" id="s-%s">%s</div></div></section>'
                       % (sid, sid, kind, H.escape(s.get('uc', '')), H.escape(title), H.escape(desc), kind, sid, body))
         click = s.get('click') or []
         if isinstance(click, str):
@@ -118,8 +156,8 @@ def main():
         qs = [q for q in qs if q.strip()]
         if click or s.get('say') or qs:
             notes[sid] = {k: v for k, v in (('click', click), ('say', s.get('say', '')), ('questions', qs)) if v}
-        qmark = '<span class="tq">%d open question%s</span>' % (len(qs), 's' if len(qs) > 1 else '') if qs else ''
-        thumbs.append('<button type="button" class="thumb" data-go="%s"><span class="tn">%02d</span><span class="tu">%s</span><span class="tt">%s</span>%s</button>'
+        qmark = '<span class="wk-tq">%d open question%s</span>' % (len(qs), 's' if len(qs) > 1 else '') if qs else ''
+        thumbs.append('<button type="button" class="wk-thumb" data-go="%s"><span class="wk-tn">%02d</span><span class="wk-tu">%s</span><span class="wk-tt">%s</span>%s</button>'
                       % (sid, i + 1, H.escape(s.get('uc', '')), H.escape(s.get('short', sid)), qmark))
     for n in cfg.get('nav', []):
         if n['target'] not in ids:

@@ -45,6 +45,7 @@ Folder of this skill = SKILL_DIR. Work in a new folder WORK, for example `<demo 
 - **Labels**: `<span class="tag t-ootb">OOTB</span>` (also `t-cfg`, `t-new`, `t-cus`, `t-mock`) next to the element. Put `{{tagsClass}}` on the board's root so the canvas can hide them.
 - **Clickable path**: every element the presenter clicks is a link `href="<NextScreenId>.dc.html"`. Each board should have at least one link forward.
 - **Static HTML only**: no `<sc-for>` loops and no `{{…}}` bindings other than `{{tagsClass}}`. Write table rows out. The builder refuses anything else.
+- **Styles**: put each board's CSS in its `<helmet><style>`. The builder scopes it to that screen: `body` becomes the screen root, and `@media` / `@supports` are scoped too. `@keyframes` and `@font-face` are kept, and any other at-rule is reported and left out. Any class names are fine on boards, because the shell's own classes all start with `wk-` and never touch the screens.
 - Show the canvas to the user, take their edits, and only then go on.
 
 ## 3. Export the boards to WORK\boards
