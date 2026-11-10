@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.6.1 — 2026-11-10
+- **Поділитися:** за замовчуванням з усією організацією claude.ai на рівні Contributor (Can interact); конкретні люди чи Commenter / Viewer — лише на прохання.
 - Сценарій погоджується з **SC** (solution consultant), а не з SE: виправлено в скілі, оболонці («Open questions for the SC») і README.
 
 ## 0.6.0 — 2026-11-10

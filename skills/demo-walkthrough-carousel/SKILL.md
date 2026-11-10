@@ -105,7 +105,7 @@ It prints the number of steps, use cases and open questions, the seed batches, a
 
   If a capability is refused as unavailable, drop it and publish again: without `db` the page is a static carousel with comments; without `customAnchors` comments use the default anchoring.
 - **Seed the db** with `ArtifactData` on the new URL, in batches as the builder printed them: for every screen `set screens/<id>` and `set screens_original/<id>` with the content of `seed\screens-seed\<id>.json`, then `set steps/<id>` with `seed\steps-seed\<id>.json`. Read one screen back to check. Until the seed is written the page shows the built screens and the edit buttons have nothing to save into.
-- **Sharing:** by default the user shares the link from the Share menu with **specific people** at **Contributor (Can interact)**, so they can comment and change screens; reviewers who should only look get Commenter or Viewer. Org-wide access only when the user asks for it. Claude never changes sharing itself.
+- **Sharing:** by default the link is shared with **the whole claude.ai organization** at **Contributor (Can interact)**, so every colleague in the org can open it, comment and change screens. Tell the user in one line to set this in the Share menu right after publishing (Claude never changes sharing itself). Specific people only, or Commenter / Viewer, only when the user asks for it.
 - Fill `SKILL_DIR\reference\HOW-TO-EDIT.md` (title, link, demo, numbers of use cases and screens) into `WORK\HOW-TO-EDIT.md` and give the user its text to send with the link.
 - Give the user the link and one line: how many open questions and how many gaps / blockers there are to go through with the SC.
 
