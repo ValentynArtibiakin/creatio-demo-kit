@@ -52,3 +52,17 @@ Right-hand panel, white, 360–400 px:
 
 ## Labels on the boards
 Build labels (`tag t-ootb / t-cfg / t-new / t-cus / t-mock`) go right next to the element they describe, never on top of data. Keep them small (10 px uppercase) so they can be hidden with the "Build labels" toggle without changing the layout.
+
+## More from real stands (0.6.0, after Philip Shatunov)
+Defaults only: when a stand exists, read it first (`reference/stand-check.md`) and the stand wins. `tools/gen_lib.py` draws all of this.
+- **Top-bar variants:** internal users get the full bar; **portal users** (dealers, customers) have no chat pill and no ai / agent / gear icons, only apps, bell, help and avatar. Draw them as `TopBar-<variant>.dc.html` and pick with `<dc-import name="TopBar" variant="portal">` (`gen_lib.topbars()`, `desk(..., topbar='portal')`).
+- **Workplaces:** each role has its own menu (`navsets` in carousel.json); the first item is usually **Home**. A board picks it with `active="<Workplace>:<Item>"`.
+- **Icon rail:** when a record opens with the Creatio.ai panel on the right, the menu collapses to a ~52 px rail (›, grid, coloured icons). Use `active="<Workplace>:<Item>|c"`.
+- **Record header, row 2:** "Add tag" on the left; on the right, links that toggle side panels (Next steps, Feed, Attachments…). Object buttons sit left of "Close": green, blue or outlined, with an icon.
+- **DCM colour per object:** green for opportunities and cases, violet for quotes, blue for orders, orange for leads and registrations. The current stage has ▾ (`gen_lib.dcm(..., color=…)`).
+- **Left cards:** approvals with green ✓ / red ✕ and Positive / Negative / Pending counters; SLA cards with a green clock timer ("1d 22hr").
+- **Lists:** toolbar (+ ⟳ ⋮ 🔍) and a summary line "Count · Quantity (Sum) · Total (Sum)".
+- **Home pages:** title as the stand writes it ("<Name> home page"); uppercase 12 px tabs with a small icon; a greeting card "Hello <Name>!" with small outlined buttons on portal and partner homes; line, bar, donut and funnel widgets.
+- **AI panel (400 px):** header icons; the empty state is an orange logo square with "Ask or build with AI"; the composer has a context chip, "Ask anything", an agent pill with an orange icon, mic and a round send (`gen_lib.twin`, `twin_empty`).
+- **Gap and blocker badges:** red BLOCKER / amber GAP badges in the bottom-right corner of the screen (`gen_lib.flags`). They are what the **Gaps & blockers** button counts, together with the steps that have an `issue`.
+- **Customer-facing pages** (landing pages, chat widgets) use the customer's brand, not the Creatio frame.

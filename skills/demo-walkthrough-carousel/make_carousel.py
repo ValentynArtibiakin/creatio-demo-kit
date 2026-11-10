@@ -9,6 +9,11 @@ carousel.json : title, brand_line, headline, app_name, nav[] {label, target, ico
                 cards? [files of steps with a "screen" key, relative to carousel.json], uc_titles? {UC1: "…"},
                 step_blocks? (which step blocks to show, default all), layout? ("bottom-nav" puts Prev / Next under the screen).
                 A step is {who?, do, happens?, say?, attention?, issue?}. The older click [..] / say "…" per screen still works.
+                navsets? {Workplace: {title, items[{label, target, icon?, color?}]}}: boards then use
+                <dc-import name="AppNav" active="Workplace:Item"> ("…|c" = collapsed icon rail, as when the AI panel is open).
+                Top-bar variants: TopBar-<v>.dc.html, picked by <dc-import name="TopBar" variant="<v>">.
+                seed_dir? (folder, relative to carousel.json): writes <seed_dir>/screens-seed/<id>.json {html, css} and
+                <seed_dir>/steps-seed/<id>.json {cards}, the seed of the artifact db for in-page editing.
 out.html      : one self-contained page (shell.html from this folder is the frame). Publish it as an Artifact.
 
 Boards must be static HTML: no <sc-for> loops or {{…}} bindings except {{tagsClass}} (removed here).
@@ -85,17 +90,40 @@ def scope_css(css, sid, problems=None, owner=''):
 
 
 def appnav(cfg, active):
-    out = ['<div style="width:%dpx;box-sizing:border-box;color:#fff;display:flex;flex-direction:column;gap:2px;padding:6px 0 12px">' % int(cfg.get('nav_width', 200)),
-           '<div style="margin:0 12px 12px;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,.16);font-size:12px;color:#E3E8F0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E3E8F0" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5"></path></svg><span>Search app…</span></div>',
-           '<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 16px 14px;font-size:14px;font-weight:600"><span>%s</span><span aria-hidden="true" style="font-size:10px">▼</span></div>' % H.escape(cfg.get('app_name', ''))]
+    """Freedom UI left menu. active = "Item" (cfg.nav) or "Workplace:Item" (cfg.navsets); a trailing "|c" draws the
+    collapsed icon rail the app shows when the Creatio.ai panel is open on a record."""
+    rail = active.endswith('|c')
+    if rail:
+        active = active[:-2]
+    if ':' in active and cfg.get('navsets'):
+        ws, item = active.split(':', 1)
+        ns = cfg['navsets'].get(ws) or {}
+        cfg = dict(cfg, app_name=ns.get('title', ws), nav=ns.get('items', []))
+        active = item
+
+    def icon(n, size):
+        return ('<span style="width:26px;height:26px;flex:0 0 26px;border-radius:6px;background:%s;display:inline-flex;align-items:center;justify-content:center">'
+                '<svg width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="%s"></path></svg></span>'
+                % (H.escape(n.get('color') or '#F26B1D'), size, size, n.get('icon') or DEFAULT_ICON))
+
+    if rail:
+        out = ['<div style="width:52px;flex:0 0 52px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0;background:rgba(10,8,34,.55)">',
+               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>',
+               '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="6" height="6"></rect><rect x="14" y="4" width="6" height="6"></rect><rect x="4" y="14" width="6" height="6"></rect><rect x="14" y="14" width="6" height="6"></rect></svg>']
+        for n in cfg.get('nav', []):
+            on = ';background:rgba(255,255,255,.18)' if n['label'] == active else ''
+            out.append('<a data-go="%s" href="#%s" title="%s" style="width:40px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:6px%s">%s</a>'
+                       % (n['target'], n['target'], H.escape(n['label']), on, icon(n, 16)))
+        out.append('</div>')
+        return ''.join(out)
+    width = int(cfg.get('nav_width', 220))
+    out = ['<div style="width:%dpx;flex:0 0 %dpx;box-sizing:border-box;color:#fff;display:flex;flex-direction:column;gap:2px;padding:6px 0 12px;font-family:Montserrat,Arial,sans-serif;background:rgba(10,8,34,.55)">' % (width, width),
+           '<div style="margin:0 12px 10px;display:flex;align-items:center;gap:8px"><div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,.12);font-size:13px;color:#D4D6E8"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5"></path></svg><span>Search app…</span></div></div>',
+           '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 12px;font-size:16px;font-weight:600"><span>%s</span><svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true"><path d="M0 0h9L4.5 6z" fill="#FFFFFF"></path></svg></div>' % H.escape(cfg.get('app_name', ''))]
     for n in cfg.get('nav', []):
-        bg = ';background:rgba(255,255,255,.2)' if n['label'] == active else ''
-        svg = ('<svg width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="%s"></path></svg>'
-               % (((16, 16) if n.get('color') else (20, 20)) + (n.get('icon') or DEFAULT_ICON,)))
-        if n.get('color'):  # coloured rounded-square icon, as in the Freedom UI app menu
-            svg = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:%s;flex:0 0 26px">%s</span>' % (H.escape(n['color']), svg)
-        out.append('<a data-go="%s" href="#%s" style="display:flex;align-items:center;gap:12px;padding:%s;color:#fff;text-decoration:none;font-size:14px;font-weight:600%s">%s<span>%s</span></a>'
-                   % (n['target'], n['target'], '8px 16px' if n.get('color') else '11px 16px', bg, svg, H.escape(n['label'])))
+        bg = ';background:rgba(255,255,255,.14)' if n['label'] == active else ''
+        out.append('<a data-go="%s" href="#%s" style="display:flex;align-items:center;gap:12px;height:44px;padding:0 14px;color:#fff;text-decoration:none;font-size:15px;font-weight:500%s">%s<span>%s</span></a>'
+                   % (n['target'], n['target'], bg, icon(n, 16), H.escape(n['label'])))
     out.append('</div>')
     return ''.join(out)
 
@@ -111,19 +139,30 @@ def main():
         canvas = json.load(open(cp, encoding='utf-8')).get('boards', {})
     ids = [s['id'] for s in cfg['screens']]
 
-    topbar = ''
-    tp = os.path.join(src, 'TopBar.dc.html')
-    if os.path.exists(tp):
-        topbar = re.sub(r'<helmet>.*?</helmet>', '', inner_xdc(open(tp, encoding='utf-8').read(), 'TopBar'), flags=re.S).strip()
+    # top bars: TopBar.dc.html is the default; TopBar-<variant>.dc.html is picked by <dc-import name="TopBar" variant="<variant>">
+    topbars = {}
+    for fn in sorted(os.listdir(src)):
+        mt = re.match(r'TopBar(?:-([A-Za-z0-9]+))?\.dc\.html$', fn)
+        if mt:
+            topbars[mt.group(1) or 'default'] = re.sub(r'<helmet>.*?</helmet>', '', inner_xdc(open(os.path.join(src, fn), encoding='utf-8').read(), fn), flags=re.S).strip()
+    topbar = topbars.get('default', '')
+
+    def topbar_for(mm):
+        v = re.search(r'variant="([^"]*)"', mm.group(0))
+        name = v.group(1) if v else 'default'
+        if name not in topbars:
+            problems.append('TopBar variant "%s" has no TopBar-%s.dc.html' % (name, name))
+        return topbars.get(name, topbar)
 
     slides, thumbs, css_all, problems = [], [], [], []
     notes = {}
+    seed = {}  # editable source of every screen (body before expansion + its own css): the artifact db seed
     step_keys = ('who', 'do', 'happens', 'say', 'attention', 'issue')
 
     def clean_step(st, where):
         if isinstance(st, str):
             st = {'do': st}
-        unknown = [k for k in st if k not in step_keys + ('screen', 'uc')]
+        unknown = [k for k in st if k not in step_keys + ('screen', 'uc', 'title', 'short')]
         if unknown:
             problems.append('%s: unknown step field(s) %s' % (where, ', '.join(unknown)))
         out_st = {k: str(st[k]).strip() for k in step_keys if st.get(k) and str(st[k]).strip()}
@@ -153,9 +192,11 @@ def main():
             continue
         body = inner_xdc(open(p, encoding='utf-8').read(), sid)
         hel = re.search(r'<helmet>(.*?)</helmet>', body, re.S)
+        raw_css = ''.join(re.findall(r'<style>(.*?)</style>', hel.group(1), re.S)) if hel else ''
         if hel:
-            css_all.append(scope_css(''.join(re.findall(r'<style>(.*?)</style>', hel.group(1), re.S)), 's-' + sid, problems, sid))
             body = body.replace(hel.group(0), '')
+        css_all.append('<style id="css-%s">%s</style>' % (sid, scope_css(raw_css, 's-' + sid, problems, sid)))
+        seed[sid] = {'html': body.strip(), 'css': raw_css.strip()}
         title, desc = s.get('title'), s.get('desc')
         # a dark caption bar at the top of a board (used on phone boards) becomes the slide caption
         bar = re.search(r'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 20px;background:#1A1F2C[^"]*">(.*?)</div>\s*', body, re.S)
@@ -171,7 +212,7 @@ def main():
         am = re.search(r'<dc-import name="AppNav" active="([^"]*)"[^>]*></dc-import>', body)
         if am:
             body = body.replace(am.group(0), appnav(cfg, am.group(1)))
-        body = re.sub(r'<dc-import name="TopBar"[^>]*></dc-import>', lambda m: topbar, body)
+        body = re.sub(r'<dc-import name="TopBar"[^>]*></dc-import>', topbar_for, body)
         body = re.sub(r'href="([A-Za-z0-9_-]+)\.dc\.html"', lambda m: 'data-go="%s" href="#%s"' % (m.group(1), m.group(1)), body)
         for bad, why in (('{{', 'unresolved {{…}} binding'), ('dc-import', 'unknown <dc-import> component'), ('sc-for', '<sc-for> loop - write the rows as static HTML')):
             if bad in body:
@@ -209,20 +250,49 @@ def main():
         if area:
             ucnav.append('<span class="wk-area">%s</span>' % H.escape(area))
         ucnav += buttons
-    for n in cfg.get('nav', []):
+    navs = [('', n) for n in cfg.get('nav', [])] + [(w + ':', n) for w, ns in cfg.get('navsets', {}).items() for n in ns.get('items', [])]
+    for w, n in navs:
         if n['target'] not in ids:
-            problems.append('nav "%s": target %s is not a screen' % (n['label'], n['target']))
+            problems.append('nav "%s%s": target %s is not a screen' % (w, n['label'], n['target']))
     if problems:
         print('PROBLEMS (fix the boards or carousel.json):\n  ' + '\n  '.join(dict.fromkeys(problems)))
         if any('not found' in p or 'sc-for' in p or '{{' in p for p in problems):
             sys.exit(1)
+
+    # what the page needs to draw an edited screen at view time: the top bars and the left menu for every active item
+    actives = set(re.findall(r'<dc-import name="AppNav" active="([^"]*)"', ''.join(v['html'] for v in seed.values())))
+    frame = {'topbars': topbars, 'nav': {a: appnav(cfg, a) for a in actives}}
+    frame_json = json.dumps(frame, ensure_ascii=False).replace('</', '<\\/')
+
+    if cfg.get('seed_dir'):
+        sd = os.path.join(os.path.dirname(os.path.abspath(cfg_path)), cfg['seed_dir'])
+        for sub in ('screens-seed', 'steps-seed'):
+            os.makedirs(os.path.join(sd, sub), exist_ok=True)
+        for sid, v in seed.items():
+            json.dump(v, open(os.path.join(sd, 'screens-seed', sid + '.json'), 'w', encoding='utf-8'), ensure_ascii=False)
+            json.dump({'cards': notes.get(sid, {}).get('steps', [])}, open(os.path.join(sd, 'steps-seed', sid + '.json'), 'w', encoding='utf-8'), ensure_ascii=False)
+        # ArtifactData batch: at most 50 writes and ~1 MiB per call (screens + screens_original = 2 writes per screen)
+        groups, cur_g, size = [], [], 0
+        for sid in ids:
+            if sid not in seed:
+                continue
+            sz = 2 * len(json.dumps(seed[sid], ensure_ascii=False).encode('utf-8'))
+            if cur_g and (size + sz > 900000 or len(cur_g) >= 24):
+                groups.append(cur_g); cur_g, size = [], 0
+            cur_g.append(sid); size += sz
+        if cur_g:
+            groups.append(cur_g)
+        print('seed: %d screens in %d batch(es) -> %s' % (len(seed), len(groups), sd))
+        for k, g in enumerate(groups, 1):
+            print('  batch %d: %s' % (k, ', '.join(g)))
 
     shell = open(os.path.join(HERE, 'shell.html'), encoding='utf-8').read()
     out = (shell.replace('{{TITLE}}', H.escape(cfg.get('title', 'Demo walkthrough')))
                 .replace('{{BRAND_LINE}}', H.escape(cfg.get('brand_line', '')))
                 .replace('{{HEADLINE}}', H.escape(cfg.get('headline', '')))
                 .replace('{{COUNT}}', str(len(slides)))
-                .replace('/*SCREENCSS*/', '\n'.join(css_all))
+                .replace('<style>\n/*SCREENCSS*/\n</style>', '\n'.join(css_all))
+                .replace('/*FRAMEJSON*/', frame_json)
                 .replace('<!--SLIDES-->', '\n'.join(slides))
                 .replace('<!--THUMBS-->', '\n'.join(thumbs))
                 .replace('<!--UCNAV-->', ''.join(ucnav))

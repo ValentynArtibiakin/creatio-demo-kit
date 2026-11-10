@@ -1,0 +1,13 @@
+{
+  "comments": {"composer_only": true, "customAnchors": true},
+  "db": {
+    "rules": [
+      {"path": "screens", "read": "view", "write": "interact"},
+      {"path": "steps", "read": "view", "write": "interact"},
+      {"path": "screen_versions", "read": "view", "write": "interact"},
+      {"path": "screens_original", "read": "owner", "write": "owner"}
+    ]
+  },
+  "user": {"scopes": ["profile"]},
+  "sample": {}
+}
