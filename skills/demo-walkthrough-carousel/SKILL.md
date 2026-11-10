@@ -1,6 +1,6 @@
 ---
 name: demo-walkthrough-carousel
-description: Turn a Creatio demo script into a clickable walkthrough carousel before anything is built — one screen per demo step drawn as Creatio Freedom UI (client logo, app menu, real data from the script), build labels OOTB / Config / New / Custom / Demo mock, steps per screen (who, Do, What happens, Say, Attention, Issue), a use-case switcher, open questions for the SE, comments right on the screens, published as one Artifact link to discuss the scenario with the SE and then hand it to the consultants. Use when someone hands over a demo script and wants to see or agree how the demo will look, says "прототип", "карусель", "walkthrough", "покажи як це виглядатиме", or wants to check a script with the SE before the build.
+description: Turn a Creatio demo script into a clickable walkthrough carousel before anything is built — one screen per demo step drawn as Creatio Freedom UI (client logo, app menu, real data from the script), build labels OOTB / Config / New / Custom / Demo mock, steps per screen (who, Do, What happens, Say, Attention, Issue), a use-case switcher, open questions for the SC, comments right on the screens, published as one Artifact link to discuss the scenario with the SC and then hand it to the consultants. Use when someone hands over a demo script and wants to see or agree how the demo will look, says "прототип", "карусель", "walkthrough", "покажи як це виглядатиме", or wants to check a script with the SC before the build.
 ---
 
 # Demo walkthrough carousel
@@ -9,8 +9,8 @@ You turn a demo script into a clickable prototype: one board per screen, glued b
 Talk to the user in their language (Ukrainian by default). On the screens and in the notes, use the language of the demo.
 
 The carousel serves two moments, with the same link:
-- **Discussion**: the screens, plus open questions for the SE on the screens where something is unclear, and the gaps and blockers marked on the screens.
-- **Handover**: once the SE has agreed, the questions are answered and removed, and the consultant leads the demo from the steps above each screen.
+- **Discussion**: the screens, plus open questions for the SC (the solution consultant who owns the demo and agrees the scenario) on the screens where something is unclear, and the gaps and blockers marked on the screens.
+- **Handover**: once the SC has agreed, the questions are answered and removed, and the consultant leads the demo from the steps above each screen.
 
 Folder of this skill = SKILL_DIR. Work in a new folder WORK, for example `<demo folder>\Build\walkthrough\`, never inside SKILL_DIR.
 The screen generator, the edit layer, the gap badges, the workplace menus and the icon rail come from Philip Shatunov's mock-up skill (0.6.0).
@@ -33,7 +33,7 @@ The screen generator, the edit layer, the gap badges, the workplace menus and th
   - `attention` (optional): a real caveat for the presenter, e.g. a background job that takes 10 s, or a step that must be done in a set order;
   - `issue` (optional): a gap or blocker in this step, still open on the build side. Mark the same issue on the screen with a GAP / BLOCKER badge (step 2).
 - For a long script, put the steps in separate card files per section instead of carousel.json (`cards`, see step 4). Each step then carries `"screen": "<id>"`.
-- Collect **open questions for the SE** per screen: everything the script leaves open or contradictory, everything a mockup cannot settle, every "to confirm" in the script. One question per line, answerable by the SE, with no build jargon. A screen without doubts has no questions.
+- Collect **open questions for the SC** per screen: everything the script leaves open or contradictory, everything a mockup cannot settle, every "to confirm" in the script. One question per line, answerable by the SC, with no build jargon. A screen without doubts has no questions.
 - Show the user the screen list (a short table: screen, UC, what it shows, number of open questions, gaps) and wait for an OK before drawing. This is the cheap moment to cut or merge screens.
 
 ### Optional: read the stand first
@@ -73,7 +73,7 @@ When the user wants to draw and adjust the screens visually: `Artifact` with `ac
 Write `WORK\carousel.json` as JSON:
 - `title`: the Artifact name, e.g. "<Client> Demo Walkthrough";
 - `brand_line` and `headline`: the two lines at the top;
-- `screens[]`: `id`, `uc`, `short`, and optionally `area`, `title`, `desc`, `kind` (`phone` / `desk`), `steps` (list of `{who, do, happens, say, attention, issue}`), `questions` (open questions for the SE). The older `click` (list) and `say` (text) per screen still work;
+- `screens[]`: `id`, `uc`, `short`, and optionally `area`, `title`, `desc`, `kind` (`phone` / `desk`), `steps` (list of `{who, do, happens, say, attention, issue}`), `questions` (open questions for the SC). The older `click` (list) and `say` (text) per screen still work;
 - `cards` (optional): card files, relative to carousel.json, each a JSON list of steps with `"screen": "<id>"`;
 - `uc_titles` (optional): `{"UC1": "The robot", …}`, the short names on the use-case buttons;
 - `step_blocks` (optional): which step blocks to show, e.g. `["who","do","happens"]`. The default is all six;
@@ -107,10 +107,10 @@ It prints the number of steps, use cases and open questions, the seed batches, a
 - **Seed the db** with `ArtifactData` on the new URL, in batches as the builder printed them: for every screen `set screens/<id>` and `set screens_original/<id>` with the content of `seed\screens-seed\<id>.json`, then `set steps/<id>` with `seed\steps-seed\<id>.json`. Read one screen back to check. Until the seed is written the page shows the built screens and the edit buttons have nothing to save into.
 - **Sharing:** by default the user shares the link from the Share menu with **specific people** at **Contributor (Can interact)**, so they can comment and change screens; reviewers who should only look get Commenter or Viewer. Org-wide access only when the user asks for it. Claude never changes sharing itself.
 - Fill `SKILL_DIR\reference\HOW-TO-EDIT.md` (title, link, demo, numbers of use cases and screens) into `WORK\HOW-TO-EDIT.md` and give the user its text to send with the link.
-- Give the user the link and one line: how many open questions and how many gaps / blockers there are to go through with the SE.
+- Give the user the link and one line: how many open questions and how many gaps / blockers there are to go through with the SC.
 
-## 6. After the SE call: answers in, then the handover
-- Reviewers may have changed screens and steps on the page already; those live in the db. To make a change yourself, follow `SKILL_DIR\reference\EDIT-SCREENS.md` (ArtifactData, with a `screen_versions` copy first). Read comments with `ArtifactComments`. Sort each comment: a concrete change goes into the screen or the steps; an answer to an open question goes in and the question is removed from `carousel.json`; anything ambiguous, contradictory or changing the scope goes back to the user as a list. A question the SE could not answer stays. Do not reply to or resolve threads in the user's name; offer reply texts instead.
+## 6. After the SC call: answers in, then the handover
+- Reviewers may have changed screens and steps on the page already; those live in the db. To make a change yourself, follow `SKILL_DIR\reference\EDIT-SCREENS.md` (ArtifactData, with a `screen_versions` copy first). Read comments with `ArtifactComments`. Sort each comment: a concrete change goes into the screen or the steps; an answer to an open question goes in and the question is removed from `carousel.json`; anything ambiguous, contradictory or changing the scope goes back to the user as a list. A question the SC could not answer stays. Do not reply to or resolve threads in the user's name; offer reply texts instead.
 - **Rebuild only when the frame, a menu, the questions or the screen list change.** First read every `screens/<id>` and `steps/<id>` back and carry the edits into gen.py / the boards and carousel.json, because a rebuild starts from them. Publish to the same URL **without** `capabilities` (that keeps the db and its rules), and seed only the new screens.
 - When the open-question counter reaches 0 and the user says the scenario is agreed, the carousel is the **consultant version**. Check that every screen has steps, and that the remaining gaps are real. Give the user the link for the consultants and one line: the consultant leads the demo with the use-case buttons and ← →, and reads the steps above each screen.
 

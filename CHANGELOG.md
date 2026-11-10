@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.1 — 2026-11-10
+- Сценарій погоджується з **SC** (solution consultant), а не з SE: виправлено в скілі, оболонці («Open questions for the SC») і README.
+
 ## 0.6.0 — 2026-11-10
 Покращення від Philip Shatunov (його mock-up скіл), влиті трьома частинами.
 - **Gaps & blockers.** Червоні BLOCKER і жовті GAP позначки на екранах (`gen_lib.flags`). Кнопка «Gaps & blockers: N» проводить по екранах, де є позначка або крок з `issue`. На мініатюрах таких екранів є мітка «gap».

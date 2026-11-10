@@ -5,7 +5,7 @@
 boards folder : the exported Design boards, one <ScreenId>.dc.html per screen, plus the shared components
                 TopBar.dc.html and AppNav.dc.html (optional) and canvas.json (optional, used for titles/sizes).
 carousel.json : title, brand_line, headline, app_name, nav[] {label, target, icon?, color?}, nav_width? (px, default 200),
-                screens[] {id, uc, area?, short, title?, desc?, kind?, steps?: [step], questions?: [open questions for the SE]},
+                screens[] {id, uc, area?, short, title?, desc?, kind?, steps?: [step], questions?: [open questions for the SC]},
                 cards? [files of steps with a "screen" key, relative to carousel.json], uc_titles? {UC1: "…"},
                 step_blocks? (which step blocks to show, default all), layout? ("bottom-nav" puts Prev / Next under the screen).
                 A step is {who?, do, happens?, say?, attention?, issue?}. The older click [..] / say "…" per screen still works.
