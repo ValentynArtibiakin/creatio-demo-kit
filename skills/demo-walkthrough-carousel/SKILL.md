@@ -1,6 +1,6 @@
 ---
 name: demo-walkthrough-carousel
-description: Turn a Creatio demo script into a clickable walkthrough carousel before anything is built — one screen per demo step drawn as Creatio Freedom UI (client logo, app menu, real data from the script), build labels OOTB / Config / New / Custom / Demo mock, steps per screen (who, Do, What happens, Say, Attention, Issue), a use-case switcher, open questions for the SC, comments right on the screens, published as one Artifact link to discuss the scenario with the SC and then hand it to the consultants. Use when someone hands over a demo script and wants to see or agree how the demo will look, says "прототип", "карусель", "walkthrough", "покажи як це виглядатиме", or wants to check a script with the SC before the build.
+description: Turn a Creatio demo script into a clickable walkthrough carousel before anything is built — one screen per demo step drawn as Creatio Freedom UI (client logo, app menu, real data from the script), build labels OOTB / Config / New / Custom / Demo mock, steps per screen (who, Do, What happens, Say, Attention, Issue), a use-case switcher, open questions for the SC, comments right on the screens, published as one Artifact link. Made for the Solution Consultant (SC) who writes the demo script: the SC answers every open question on the page and sends the carousel with the script to the Solution Engineer (SE) who builds the demo. Use when someone has a demo script and wants to see or agree how the demo will look, says "прототип", "карусель", "walkthrough", "покажи як це виглядатиме", or wants to check a script before the build.
 ---
 
 # Demo walkthrough carousel
@@ -8,9 +8,13 @@ description: Turn a Creatio demo script into a clickable walkthrough carousel be
 You turn a demo script into a clickable prototype: one board per screen, glued by `make_carousel.py` into one page and published as an Artifact. Reviewers can comment on any element, change a screen with Claude, and edit the step text right on the page. There are no sample screens in the plugin: client screens never leave the user's computer.
 Talk to the user in their language (Ukrainian by default). On the screens and in the notes, use the language of the demo.
 
-The carousel serves two moments, with the same link:
-- **Discussion**: the screens, plus open questions for the SC (the solution consultant who owns the demo and agrees the scenario) on the screens where something is unclear, and the gaps and blockers marked on the screens.
-- **Handover**: once the SC has agreed, the questions are answered and removed, and the consultant leads the demo from the steps above each screen.
+**Who is who.** The **Solution Consultant (SC)** writes the demo script, answers the build team's questions and shows the demo to the client. The **Solution Engineer (SE)** builds and configures the demo stand. The skill is made for the SC:
+1. The SC runs it on their script. Claude draws the carousel and asks its open questions on the screens.
+2. The SC answers all of them, in the chat or on the page (**Answer** on a question, an Issue or a GAP / BLOCKER badge). Teammates may answer and comment too.
+3. The SC sends the carousel link together with the script to the SE. The SE's Claude builds the demo from both; questions the SE adds later on the page are again for the SC.
+4. When the demo is built, the SC presents it from the same carousel: the steps above each screen are the click path and the talk track.
+
+When the person running the skill is the SC, the open questions are theirs: ask them in the chat while drawing, and put on the page only what they cannot answer yet. When an SE runs it, the questions are for the SC, so they go on the page.
 
 Folder of this skill = SKILL_DIR. Work in a new folder WORK, for example `<demo folder>\Build\walkthrough\`, never inside SKILL_DIR.
 The screen generator, the edit layer, the gap badges, the workplace menus and the icon rail come from Philip Shatunov's mock-up skill (0.6.0).
@@ -118,7 +122,7 @@ It prints the number of steps, use cases and open questions, the seed batches, a
   - show the user a table: item · answer (who) · what was changed and where · how to undo. Items still `open` go to the user as the list for the next SC call.
 - Reviewers may have changed screens and steps on the page already; those live in the db. To make a change yourself, follow `SKILL_DIR\reference\EDIT-SCREENS.md` (ArtifactData, with a `screen_versions` copy first). Read comments with `ArtifactComments`. Sort each comment: a concrete change goes into the screen or the steps; an answer to an open question goes in and the question is removed from `carousel.json`; anything ambiguous, contradictory or changing the scope goes back to the user as a list. A question the SC could not answer stays. Do not reply to or resolve threads in the user's name; offer reply texts instead.
 - **Rebuild only when the frame, a menu, the questions or the screen list change.** First read every `screens/<id>` and `steps/<id>` back and carry the edits into gen.py / the boards and carousel.json, because a rebuild starts from them. Publish to the same URL **without** `capabilities` (that keeps the db and its rules), and seed only the new screens.
-- When the open-question counter reaches 0 and the user says the scenario is agreed, the carousel is the **consultant version**. Check that every screen has steps, and that the remaining gaps are real. Give the user the link for the consultants and one line: the consultant leads the demo with the use-case buttons and ← →, and reads the steps above each screen.
+- When the open-question counter reaches 0 and the SC says the scenario is agreed, the carousel is ready to go to the SE. Check that every screen has steps, and that the remaining gaps are real. Give the user the link and one line: send it to the SE together with the script; after the build, the SC presents from the same link with the use-case buttons and ← →, reading the steps above each screen.
 
 ## Feedback
 At the end, add one line for the user. Feedback on the carousel goes to the plugin repository `ValentynArtibiakin/creatio-demo-kit` as an issue with the «Carousel feedback» template: what was wrong, the screen ids, and the kind of demo. The repository is public, so no customer names, people, stand URLs or links to client-confidential carousels. With `gh` installed, Claude can draft it: `gh issue create -R ValentynArtibiakin/creatio-demo-kit --template carousel-feedback.yml`.
