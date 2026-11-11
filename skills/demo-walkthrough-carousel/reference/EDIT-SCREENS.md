@@ -9,6 +9,10 @@ For a carousel published with the edit layer (`reference/capabilities.json`). Th
 | `steps` | screen id | `{cards: [{who, do, happens, say, attention, issue}]}`: the text above the screen |
 | `screen_versions` | `<screenId>--<YYYYMMDDTHHMMSSmmmZ>` | `{screen, savedAt, html, css, steps, by}`: a copy before each change (Undo, Versions) |
 | `screens_original` | screen id | the first version of every screen; owner only |
+| `answers` | `<item key>--<UTC time>` | `{key, screen, kind: question\|issue\|blk\|gap, item, step, answer, by, at, status: pending\|open\|resolved, summary, reason}`: an answer given on the page |
+| `resolved` | item key, e.g. `question-CaseRec-1yv5e45` | `{screen, kind, item, answer, summary, by, at}`: the item is settled; the page hides a question with this key |
+
+The item key is `<kind>-<screen>-<hash>`, where the hash is computed by the page from the item text; take keys from `answers`, never compute them by hand. To reopen a settled question, delete its `resolved/<key>`.
 
 ## Change a screen
 1. `get` `screens/<id>` (and `steps/<id>`).

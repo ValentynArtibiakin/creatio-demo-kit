@@ -23,7 +23,7 @@ window.__w = [];
         if (window.__fail) throw { code: 'invalid_argument', message: 'refused by mock' };
         if (can === false) throw { code: 'permission_denied', message: 'viewer' };
         window.__w.push('set ' + p); store[p] = JSON.parse(JSON.stringify(d));
-        var c = p.split('/')[0]; if (listeners[c]) emit(c, [p]);
+        var c = p.split('/')[0]; if (listeners[c]) emit(c, Object.keys(store).filter(function (k) { return k.indexOf(c + '/') === 0 }));
       },
       delete: async function () { window.__w.push('delete ' + p); delete store[p] }
     };
@@ -42,6 +42,7 @@ window.__w = [];
       },
       onSnapshot: function (n) {
         listeners[c] = listeners[c] || []; listeners[c].push(n);
+        if (c !== 'screens' && c !== 'steps') { setTimeout(function () { emit(c, Object.keys(store).filter(function (k) { return k.indexOf(c + '/') === 0 })) }, 0) }
         if (c === 'screens' || c === 'steps') {
           var ids = (window.__wk && window.__wk.ids) || [];
           Promise.all(ids.map(function (id) {
@@ -57,7 +58,8 @@ window.__w = [];
   window.__push = function (id, d) { store['screens/' + id] = d; emit('screens', ['screens/' + id]) };
   window.__store = store;
   var db = { doc: docRef, collection: query };
-  var user = { id: async function () { return 'u_test' }, can: async function () { return can } };
+  var user = { id: async function () { return 'u_test' }, can: async function () { return can },
+    profiles: async function (ids) { var o = {}; ids.forEach(function (i) { o[i] = { name: 'Test SC' } }); return o } };
   // default answer: insert a marker right after the root tag of the screen
   var sample = {
     json: async function (prompt, opts) {

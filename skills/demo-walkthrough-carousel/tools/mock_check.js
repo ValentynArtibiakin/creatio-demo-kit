@@ -28,6 +28,54 @@
   await wait(500);
   ok(!/TEST CHANGE/.test(scr().innerHTML), 'undo did not restore the previous version');
 
+  // 2b. answering open questions, step issues and GAP / BLOCKER badges (only on a screen that has them)
+  async function answer(target, text, reply) {
+    window.__answer = function () { return reply }; target.click(); await wait(80);
+    ok(!$('#ans').hidden, 'answer panel did not open for ' + target.className);
+    $('#ans-ta').value = text; $('#ans-send').click(); await wait(700); window.__answer = null;
+  }
+  var q0 = $('#n-q-list li.wk-ansable');
+  if (q0) {
+    var qn = document.querySelectorAll('#n-q-list li').length, qText = q0.dataset.atext;
+    before = window.__w.length;
+    await answer(q0, '<img src=x onerror="window.__pwned=7">not sure, ask the client', { resolved: false, reason: 'Who on the client side decides?' });
+    w = window.__w.slice(before).join(' | ');
+    ok(/set answers\//.test(w) && !/set resolved\//.test(w), 'an unresolved answer must write answers/ only: ' + w);
+    ok(document.querySelectorAll('#n-q-list li').length === qn, 'an unresolved question disappeared');
+    ok(/Still open/.test($('#ans-thr').textContent) && !$('#ans-thr').querySelector('img'), 'thread does not show the open answer as text');
+    $('#ans-x').click();
+    ok($('#notes .wk-athr'), 'the answer is not shown under the question');
+    q0 = [].filter.call(document.querySelectorAll('#n-q-list li'), function (l) { return l.dataset.atext === qText })[0];
+    before = window.__w.length;
+    await answer(q0, '8 hours, business calendar', { resolved: true, summary: 'SLA is 8 hours' });
+    w = window.__w.slice(before).join(' | ');
+    ok(/set resolved\//.test(w), 'a resolved question did not write resolved/: ' + w);
+    ok(document.querySelectorAll('#n-q-list li').length === qn - 1, 'the resolved question is still listed');
+  }
+  var iss = $('#n-steps .wk-iss.wk-ansable');
+  if (iss) {
+    before = window.__w.length;
+    await answer(iss, 'Pause the SLA while waiting for parts', { resolved: true, summary: 'SLA pauses while waiting for parts' });
+    w = window.__w.slice(before).join(' | ');
+    ok(/set steps\//.test(w) && /set screen_versions\//.test(w), 'a resolved issue did not save steps with a version: ' + w);
+    ok(!$('#n-steps .wk-iss'), 'the resolved issue is still shown');
+  }
+  // every badge on the screen in turn: each answer takes off only its own badge; the counter drops when the screen is clean
+  var gapsBefore = $('#t-gap').hidden ? 0 : +(/\d+/.exec($('#t-gap').textContent) || [0])[0], hadFlags = !!scr().querySelector('.k-flag');
+  for (var guard = 0; guard < 6 && scr().querySelector('.k-flag'); guard++) {
+    var fl = scr().querySelector('.k-flag'), flText = fl.textContent, nFl = scr().querySelectorAll('.k-flag').length;
+    before = window.__w.length;
+    await answer(fl, 'Not needed for the demo', { resolved: true, summary: 'Dropped' });
+    w = window.__w.slice(before).join(' | ');
+    ok(/set screens\//.test(w) && /set resolved\//.test(w), 'a resolved badge did not save the screen and resolved/: ' + w);
+    ok(scr().querySelectorAll('.k-flag').length === nFl - 1 && [].every.call(scr().querySelectorAll('.k-flag'), function (x) { return x.textContent !== flText }), 'the answered badge is still on the screen, or another one went with it: ' + flText);
+  }
+  if (hadFlags) {
+    var gapsAfter = $('#t-gap').hidden ? 0 : +(/\d+/.exec($('#t-gap').textContent) || [0])[0];
+    ok(!scr().querySelector('.k-flags') && gapsAfter < gapsBefore, 'Gaps & blockers counter did not go down, or an empty badge box is left: ' + gapsBefore + ' -> ' + gapsAfter);
+  }
+  ok(window.__pwned === undefined || window.__pwned === 0, 'an answer text ran as HTML');
+
   // 3. hostile answers from Claude
   window.__pwned = 0;
   var evil = [

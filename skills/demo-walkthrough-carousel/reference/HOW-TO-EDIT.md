@@ -11,6 +11,14 @@ This is the clickable walkthrough of {{DEMO}}: {{N_UC}} use cases, {{N_SCREENS}}
 - Above each screen: **Do** (what the presenter clicks or types) and **What happens**. **Attention** (amber) is a risk at that step, **Issue** (red) a gap or blocker, and **Say** (collapsed) the talk track.
 - **Gaps & blockers: N** walks through every screen with an open issue. The same issues are marked on the screens with a red BLOCKER or amber GAP badge.
 
+## Answer an open question, a gap or a blocker
+Open questions, the **Issue** of a step and the red **BLOCKER** / amber **GAP** badges on a screen carry an **Answer** mark (Contributor access).
+1. Click the item. A panel opens with the item and the earlier answers to it.
+2. Type or say the answer (**EN / UA** for the microphone) and click **Send answer** (Ctrl+Enter).
+3. Your Claude reads it at once. If the answer settles the item, Claude changes the screen and the steps to follow it, and the item disappears for everyone; **Versions** keeps the screen as it was. If it does not settle it, the item stays, with your answer and Claude's question back under it.
+
+If Claude is not available in your account, the answer is still saved and the owner of the walkthrough applies it.
+
 ## Change a screen with Claude
 1. Open the screen and click **Change with Claude** (bottom right).
 2. Type or say what should change, for example "show the amount as 9,500" or "add a Warranty tab next to Timeline". The microphone takes voice; **EN / UA** switches its language. If the microphone is blocked, use keyboard dictation (Win+H on Windows, Fn twice on a Mac).
