@@ -2,7 +2,7 @@
 
 Link: {{URL}}
 
-This is the clickable walkthrough of {{DEMO}}: {{N_UC}} use cases, {{N_SCREENS}} screens. People it is shared with can open it and comment on it; with **Contributor (Can interact)** access they can also change it. Changes show for everyone at once; nothing has to be rebuilt.
+This is the clickable walkthrough of {{DEMO}}: {{N_UC}} use cases, {{N_SCREENS}} screens. People it is shared with can open it and comment on it; with edit access (**Editor**, the default for the whole organization, or **Contributor**) they can also change it. Changes show for everyone at once; nothing has to be rebuilt.
 
 ## Find your way
 - **Use-case buttons** at the top jump to the first screen of that story.
@@ -12,7 +12,7 @@ This is the clickable walkthrough of {{DEMO}}: {{N_UC}} use cases, {{N_SCREENS}}
 - **Gaps & blockers: N** walks through every screen with an open issue. The same issues are marked on the screens with a red BLOCKER or amber GAP badge.
 
 ## Answer an open question, a gap or a blocker
-Open questions, the **Issue** of a step and the red **BLOCKER** / amber **GAP** badges on a screen carry an **Answer** mark (Contributor access).
+Open questions, the **Issue** of a step and the red **BLOCKER** / amber **GAP** badges on a screen carry an **Answer** mark (edit access).
 1. Click the item. A panel opens with the item and the earlier answers to it.
 2. Type or say the answer (**EN / UA** for the microphone) and click **Send answer** (Ctrl+Enter).
 3. Your Claude reads it at once. If the answer settles the item, Claude changes the screen and the steps to follow it, and the item disappears for everyone; **Versions** keeps the screen as it was. If it does not settle it, the item stays, with your answer and Claude's question back under it.
@@ -28,10 +28,10 @@ If Claude is not available in your account, the answer is still saved and the ow
 With view or comment access, Claude's change stays on your screen only and the page says so; send it to the team with **💬 Comment** instead.
 
 ## Edit the step text by hand
-**Edit step text** (top right, Contributor access): each step has Who, Do, What happens, Say, Attention and Issue. Add or remove steps, then **Save for everyone**; **Done editing** goes back. Clearing the Issue of a step takes it off the Gaps & blockers counter.
+**Edit step text** (top right, edit access): each step has Who, Do, What happens, Say, Attention and Issue. Add or remove steps, then **Save for everyone**; **Done editing** goes back. Clearing the Issue of a step takes it off the Gaps & blockers counter.
 
 ## Comment
 **💬 Comment**, then click a field, a table row, a KPI or a step block, and write what is wrong, missing, or how you would show it.
 
 ## What is not on the stand
-The screens are a prototype drawn from the demo script. Numbers, names and AI answers the script does not give are sample values. Ask the owner of the walkthrough for Contributor access if you cannot save.
+The screens are a prototype drawn from the demo script. Numbers, names and AI answers the script does not give are sample values. Ask the owner of the walkthrough for edit access if you cannot save.

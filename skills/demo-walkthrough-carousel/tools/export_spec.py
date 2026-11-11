@@ -283,7 +283,10 @@ def main():
         for c in json.load(open(os.path.join(base, cf), encoding='utf-8')):
             cards.setdefault(c.get('screen'), []).append({k: v for k, v in c.items() if k != 'screen'})
     uc_titles = cfg.get('uc_titles', {})
-    spec = {'title': cfg.get('title', ''), 'headline': cfg.get('headline', ''), 'exported': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
+    spec = {'spec_version': 1, 'made_with': 'creatio-demo-kit / demo-walkthrough-carousel (tools/export_spec.py)',
+            'read_with': 'Any Claude with the creatio-demo-kit plugin: skill demo-walkthrough-carousel, section "Building from a carousel". '
+                         'Without the plugin, how_to_read below is enough; BUILD-SPEC.md is the same content for people.',
+            'title': cfg.get('title', ''), 'headline': cfg.get('headline', ''), 'exported': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
             'source': 'artifact db' if db else 'build files only (changes made on the page are NOT included)',
             'how_to_read': 'One entry per screen in demo order. build_labels say what each element needs: OOTB = standard Creatio as is; '
                            'Config = no-code setup (fields, tabs, lists, captions, rules); New = a new object, lookup or process; '

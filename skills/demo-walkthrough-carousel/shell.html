@@ -453,7 +453,7 @@ body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-
   }
   function errText(e,what){
     var c=e&&e.code;
-    if(c==='invalid_argument'||c==='permission_denied')return what+': you can view this walkthrough but not change it. Ask the owner for Contributor (Can interact) access.';
+    if(c==='invalid_argument'||c==='permission_denied')return what+': you can view this walkthrough but not change it. Ask the owner for edit access (Editor).';
     if(c==='quota_exceeded')return what+': the walkthrough storage is full.';
     if(c==='unavailable'||c==='resource_exhausted')return what+': the connection is busy. Try again in a moment.';
     if(c==='revoked'||c==='not_granted')return what+': access to this page changed. Reload the page.';
@@ -558,7 +558,7 @@ body.cm-pick #stage *,body.cm-pick #n-click li,body.cm-pick #n-say-text,body.cm-
       q.docs.forEach(function(d){
         var v=d.data()||{}, row=el('div','wk-ver'), t=el('span','',fmt(v.savedAt));
         var b=el('button','wk-ebtn','Restore'); b.type='button';
-        b.onclick=function(){if(!canSave){note('You need Contributor access to restore a version.');return}b.disabled=true;note('Restoring…');
+        b.onclick=function(){if(!canSave){note('You need edit access to restore a version.');return}b.disabled=true;note('Restoring…');
           restore(id,v,true).then(function(){note('');stateFor(id).msgs.push({role:'sys',text:'Version of '+fmt(v.savedAt)+' restored for everyone (the replaced one is kept as a version).'});chatTab='ai';renderChat()},function(e){b.disabled=false;note(errText(e,'Could not restore'))})};
         row.appendChild(t); row.appendChild(b); box.appendChild(row);
       });
